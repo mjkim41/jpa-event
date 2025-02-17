@@ -3,6 +3,7 @@ package com.study.event.controller;
 import com.study.event.domain.event.dto.request.EventCreate;
 import com.study.event.domain.event.dto.response.EventDetailResponse;
 import com.study.event.domain.event.dto.response.EventResponse;
+import com.study.event.domain.event.entity.Event;
 import com.study.event.service.EventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
