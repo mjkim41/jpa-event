@@ -1,4 +1,3 @@
-
 package com.study.event.domain.event.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;

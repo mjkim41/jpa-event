@@ -3,6 +3,7 @@ package com.study.event.controller;
 import com.study.event.domain.event.dto.request.EventCreate;
 import com.study.event.domain.event.dto.response.EventDetailResponse;
 import com.study.event.domain.event.dto.response.EventResponse;
+import com.study.event.domain.event.entity.Event;
 import com.study.event.service.EventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +22,12 @@ public class EventController {
     private final EventService eventService;
 
     // 전체조회 요청
-    @GetMapping
+    @GetMapping("")
     public ResponseEntity<?> getList(
-            @RequestParam(defaultValue = "id") String sort
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(defaultValue = "1") int page
     ) {
-        List<EventResponse> events = eventService.getEvents(sort);
+        Map<String, Object> events = eventService.getEvents(sort, page);
         return ResponseEntity.ok().body(events);
     }
 
