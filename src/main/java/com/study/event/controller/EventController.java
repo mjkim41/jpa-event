@@ -19,6 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class EventController {
 
+    //
     private final EventService eventService;
 
     // 전체조회 요청
