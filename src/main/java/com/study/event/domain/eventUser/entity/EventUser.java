@@ -39,11 +39,4 @@ public class EventUser {
     @Column(nullable = false)
     private boolean emailVerified;
 
-
-
-
-
-
-
-
 }
