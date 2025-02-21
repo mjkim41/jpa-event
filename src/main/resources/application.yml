@@ -3,7 +3,7 @@ server:
 
 # 이메일 인증코드 전송
 spring:
-  email:
+  mail:
     host: smtp.naver.com
     port: 465
     username : ${EMAIL_USERNAME}
@@ -14,7 +14,7 @@ spring:
         smtp:
           auth: true
           ssl:
-            enabled: true
+            enable: true
 
   datasource:
     url: ${DB_URL}
