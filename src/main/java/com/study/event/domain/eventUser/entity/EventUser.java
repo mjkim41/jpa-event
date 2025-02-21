@@ -32,7 +32,7 @@ public class EventUser {
     @Builder.Default
     private Role role = Role.COMMON;
 
-    @CreationTimestamp
+//    @CreationTimestamp (회원가입을 위한 인증코드 보낼 때는 설정 안되게)
     private LocalDateTime createdAt;
 
     // 이메일 인증 완료헀는지 여부

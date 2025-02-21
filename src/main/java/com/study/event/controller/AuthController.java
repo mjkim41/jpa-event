@@ -29,4 +29,19 @@ public class AuthController {
                 "message", message
         ));
     }
+
+    // 인증 코드 검증 API
+    @GetMapping("/code")
+    public ResponseEntity<?> verifyCode(String email, String code) {
+
+        log.info("The user's input code for {}: {}", email, code);
+
+        boolean isMatch = eventUserService.isMatchCode(email, code);
+
+        log.info("code matches? - {}", isMatch);
+
+        return ResponseEntity.ok().body(Map.of(
+                "isMatch", isMatch
+        ));
+    }
 }
