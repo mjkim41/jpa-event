@@ -33,4 +33,8 @@ public class EmailVerification {
     @JoinColumn(name = "event_user_id", referencedColumnName = "ev_user_id")
     private EventUser eventUser;
 
+    public void updateNewCode(String newCode) {
+        this.verificationCode = newCode;
+        this.expiryDate = LocalDateTime.now().plusMinutes(5);
+    }
 }

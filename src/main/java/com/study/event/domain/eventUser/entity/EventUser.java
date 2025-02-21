@@ -39,4 +39,9 @@ public class EventUser {
     @Column(nullable = false)
     private boolean emailVerified;
 
+    // 이메일 인증 완료여부를 변경해주는 편의메소드
+    public void emailVerify() {
+        this.emailVerified = true;
+    }
+
 }

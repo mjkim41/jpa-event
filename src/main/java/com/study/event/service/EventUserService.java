@@ -1,6 +1,5 @@
 package com.study.event.service;
 
-import com.study.event.domain.event.entity.Event;
 import com.study.event.domain.eventUser.entity.EmailVerification;
 import com.study.event.domain.eventUser.entity.EventUser;
 import com.study.event.repository.EmailVerificationRepository;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -56,6 +54,11 @@ public class EventUserService {
 
         EventUser savedUser = eventUserRepository.save(tempUser);
 
+        generateAndSendCode(email, savedUser);
+
+    }
+
+    private void generateAndSendCode(String email, EventUser savedUser) {
         // 2. 인증메일 발송
         String code = sendVerificationEmail(email);
 
@@ -67,7 +70,6 @@ public class EventUserService {
                 .build();
 
         emailVerificationRepository.save(verification);
-
     }
 
     // 이메일 인증코드를 발송하기
@@ -117,7 +119,7 @@ public class EventUserService {
 
     /**
      * 사용자가 전송한 인증코드가 발급받은 인증코드와 일치하는지 확인
-     * @param email - 사용자 이메일
+     * @param email - 사용자의 이메일
      * @param code - 사용자가 전송한 인증코드
      * @return 인증코드가 일치하고 만료되지 않았다면 true, 그게 아니라면 false
      */
@@ -129,14 +131,37 @@ public class EventUserService {
         // 2. 인증코드가 있는지 조회
         EmailVerification verificationInfo = emailVerificationRepository.findByEventUser(foundUser).orElseThrow();
 
-        // 3. 코드 번호가 일치하고 만료시간이 지나지 않았는지 체크
+        // 3. 코드가 일치하고 만료시간이 지나지 않았는지 체크
         if (
                 code.equals(verificationInfo.getVerificationCode())
-                && verificationInfo.getExpiryDate().isAfter(LocalDateTime.now())
+                        && verificationInfo.getExpiryDate().isAfter(LocalDateTime.now())
         ) {
-            return true;
-        }
+            // 이메일 인증 완료처리
+            // EventUser엔터티에서 emailVerified값을 true로 변경
+            foundUser.emailVerify();
+            eventUserRepository.save(foundUser);
 
-        return false;
+            // 인증코드 삭제
+            emailVerificationRepository.delete(verificationInfo);
+
+            return true;
+        } else { // 인증코드가 틀렸거나 만료된 경우
+            // 인증코드를 재발급해서 이메일을 재발송
+            // 새인증코드 발급 및 이메일 전송 데이터베이스 처리 (수정처리)
+            updateVerificationCode(email, verificationInfo);
+            return false;
+        }
+    }
+
+    // 인증코드 재발급 처리
+    private void updateVerificationCode(String email, EmailVerification emailVerification) {
+        // 1. 새인증코드 생성 및 메일발송
+        String newCode = sendVerificationEmail(email);
+
+        // 2. 데이터베이스에 수정처리 (새코드, 새 만료시간)
+        emailVerification.updateNewCode(newCode);
+
+        // 3. 데이터베이스에 수정 갱신
+        emailVerificationRepository.save(emailVerification);
     }
 }
