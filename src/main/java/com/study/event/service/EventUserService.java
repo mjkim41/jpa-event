@@ -1,5 +1,6 @@
 package com.study.event.service;
 
+import com.study.event.domain.eventUser.dto.request.SignupRequest;
 import com.study.event.domain.eventUser.entity.EmailVerification;
 import com.study.event.domain.eventUser.entity.EventUser;
 import com.study.event.repository.EmailVerificationRepository;
@@ -10,10 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -31,6 +34,9 @@ public class EventUserService {
     private final EventUserRepository eventUserRepository;
     private final EmailVerificationRepository emailVerificationRepository;
 
+    // 패스워드 인코딩을 위한 객체
+    private final PasswordEncoder passwordEncoder;
+
     // 이메일 중복확인 처리
 //    @Transactional(readOnly = true)
     public boolean checkEmailDuplicate(String email) {
@@ -38,12 +44,39 @@ public class EventUserService {
         boolean flag = eventUserRepository.existsByEmail(email);
         log.info("Checking email {} is duplicate: {}", email, flag);
 
+        // 이메일이 중복되었지만 회원가입이 아직 마무리되지 않은 회원은 인증코드를 재발송
+        if (flag && notFinish(email)) {
+            return false;
+        }
+
         // 사용가능한 이메일인 경우 일련의 후속처리 (인증메일 발송, 데이터베이스 처리...)
         if (!flag) {
             processSignup(email);
         }
 
         return flag;
+    }
+
+    private boolean notFinish(String email) {
+
+        // 회원 조회
+        EventUser foundUser = eventUserRepository.findByEmail(email).orElseThrow();
+
+        // 이메일인증이 되었는지 여부, 패스워드가 세팅되었는지 여부
+        if (!foundUser.isEmailVerified() || foundUser.getPassword() == null) {
+            // 인증코드 재생성 및 이메일발송 및 데이터베이스 갱신
+            Optional<EmailVerification> ev = emailVerificationRepository.findByEventUser(foundUser);
+
+            // 인증코드 인증을 안해서 db에 emailverification 객체가 남아있을 때
+            if (ev.isPresent()) {
+                updateVerificationCode(email, ev.get());
+            } else {
+                // 인증을 지나서 db에 emailverification 객체를 없어졌을 때
+                generateAndSendCode(email, foundUser);
+            }
+            return true;
+        }
+        return false;
     }
 
     private void processSignup(String email) {
@@ -163,5 +196,23 @@ public class EventUserService {
 
         // 3. 데이터베이스에 수정 갱신
         emailVerificationRepository.save(emailVerification);
+    }
+
+    // 회원가입 완료처리
+    public void confirmSignup(SignupRequest dto) {
+
+        // 1. 기존에 임시회원가입된 정보를 조회
+        EventUser foundUser = eventUserRepository.findByEmail(dto.email())
+                .orElseThrow(
+                        () -> new RuntimeException("회원 정보가 없습니다.")
+                );
+
+        // 2. 이메일 인증이 끝났는지 체크
+        if (!foundUser.isEmailVerified()) {
+            throw new RuntimeException("이메일 인증이 완료되지 않았습니다.");
+        }
+        // 3. 데이터베이스에 패스워드를 반영, 회원가입시간 저장
+        foundUser.confirm(passwordEncoder.encode(dto.password()));
+        eventUserRepository.save(foundUser);
     }
 }
