@@ -1,5 +1,6 @@
 package com.study.event.controller;
 
+import com.study.event.domain.eventUser.dto.request.LoginRequest;
 import com.study.event.domain.eventUser.dto.request.SignupRequest;
 import com.study.event.repository.EventUserRepository;
 import com.study.event.service.EventUserService;
@@ -57,8 +58,22 @@ public class AuthController {
         return ResponseEntity.ok().body(Map.of(
                         "message", "회원가입이 완료되었습니다."
         ));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest dto) {
 
 
+        try {
+            eventUserService.authenticate(dto);
+            return ResponseEntity.ok().body(Map.of(
+                    "message", "로그인 성공"
+            ));
+        } catch (com.study.event.exception.LoginFailException e) {
+            return ResponseEntity.status(422).body(Map.of(
+                    "message", e.getMessage()
+            ));
+        }
     }
 
 }
