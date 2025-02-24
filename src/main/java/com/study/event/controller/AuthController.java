@@ -2,7 +2,7 @@ package com.study.event.controller;
 
 import com.study.event.domain.eventUser.dto.request.LoginRequest;
 import com.study.event.domain.eventUser.dto.request.SignupRequest;
-import com.study.event.repository.EventUserRepository;
+import com.study.event.exception.LoginFailException;
 import com.study.event.service.EventUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,6 @@ import java.util.Map;
 public class AuthController {
 
     private final EventUserService eventUserService;
-    private final EventUserRepository eventUserRepository;
 
     // email 중복확인 API 생성
     @GetMapping("/check-email")
@@ -35,8 +34,7 @@ public class AuthController {
     // 인증 코드 검증 API
     @GetMapping("/code")
     public ResponseEntity<?> verifyCode(String email, String code) {
-
-        log.info("The user's input code for {}: {}", email, code);
+        log.info("{}'s verify code is [ {} ]", email, code);
 
         boolean isMatch = eventUserService.isMatchCode(email, code);
 
@@ -51,28 +49,28 @@ public class AuthController {
     @PostMapping("/join")
     public ResponseEntity<?> join(@RequestBody SignupRequest dto) {
 
-        log.info("The user's input signup request: {}", dto);
+        log.info("save request user info - {}", dto);
 
         eventUserService.confirmSignup(dto);
 
         return ResponseEntity.ok().body(Map.of(
-                        "message", "회원가입이 완료되었습니다."
+                "message", "회원가입이 완료되었습니다."
         ));
     }
 
+    // 로그인 검증 요청
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest dto) {
 
-
         try {
-            eventUserService.authenticate(dto);
-            return ResponseEntity.ok().body(Map.of(
-                    "message", "로그인 성공"
-            ));
-        } catch (com.study.event.exception.LoginFailException e) {
-            return ResponseEntity.status(422).body(Map.of(
-                    "message", e.getMessage()
-            ));
+            Map<String, Object> loginMap = eventUserService.authenticate(dto);
+
+            return ResponseEntity.ok().body(loginMap);
+        } catch (LoginFailException e) {
+            return ResponseEntity.status(422)
+                    .body(Map.of(
+                            "message", e.getMessage()
+                    ));
         }
     }
 

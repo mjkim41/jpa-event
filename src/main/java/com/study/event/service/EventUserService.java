@@ -5,6 +5,7 @@ import com.study.event.domain.eventUser.dto.request.SignupRequest;
 import com.study.event.domain.eventUser.entity.EmailVerification;
 import com.study.event.domain.eventUser.entity.EventUser;
 import com.study.event.exception.LoginFailException;
+import com.study.event.jwt.JwtTokenProvider;
 import com.study.event.repository.EmailVerificationRepository;
 import com.study.event.repository.EventUserRepository;
 import jakarta.mail.internet.MimeMessage;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -32,12 +34,13 @@ public class EventUserService {
 
     // 이메일 발송을 위한 객체
     private final JavaMailSender mailSender;
+    // 패스워드 인코딩을 위한 객체
+    private final PasswordEncoder passwordEncoder;
+    // 액세스토큰 발급을 위한 객체
+    private final JwtTokenProvider tokenProvider;
 
     private final EventUserRepository eventUserRepository;
     private final EmailVerificationRepository emailVerificationRepository;
-
-    // 패스워드 인코딩을 위한 객체
-    private final PasswordEncoder passwordEncoder;
 
     // 이메일 중복확인 처리
 //    @Transactional(readOnly = true)
@@ -69,13 +72,12 @@ public class EventUserService {
             // 인증코드 재생성 및 이메일발송 및 데이터베이스 갱신
             Optional<EmailVerification> ev = emailVerificationRepository.findByEventUser(foundUser);
 
-            // 인증코드 인증을 안해서 db에 emailverification 객체가 남아있을 때
-            if (ev.isPresent()) {
-                updateVerificationCode(email, ev.get());
-            } else {
-                // 인증을 지나서 db에 emailverification 객체를 없어졌을 때
-                generateAndSendCode(email, foundUser);
+            if (ev.isPresent()) { // 이메일 인증코드가 존재하면
+                updateVerificationCode(email, ev.get()); // 인증코드를 수정
+            } else { // 인증은했는데 마무리를 못지은 회원
+                generateAndSendCode(email, foundUser); // 인증코드를 재생성
             }
+
             return true;
         }
         return false;
@@ -149,7 +151,7 @@ public class EventUserService {
 
     // 무작위 인증코드를 생성하는 기능
     private static String generateVerificationCode() {
-        return String.valueOf((int) (Math.random() * 9000 + 1000));
+        return java.lang.String.valueOf((int) (Math.random() * 9000 + 1000));
     }
 
     /**
@@ -219,23 +221,31 @@ public class EventUserService {
     }
 
     // 로그인 검증 수행
-    public void authenticate(LoginRequest dto) {
+    public Map<String, Object> authenticate(LoginRequest dto) {
 
         // 이메일을 통한 회원 조회
         EventUser foundUser = eventUserRepository.findByEmail(dto.email()).orElseThrow(
-                () -> new LoginFailException("가입된 회원이 아닙니다")
+                () -> new LoginFailException("가입된 회원이 아닙니다.")
         );
 
-        // 이메일 민증 미완료 혹은 패스워드 입력 단계 미수행
+        // 이메일 인증을 안했거나, 패스워드 입력단계를 수행하지 않은 회원
         if (!foundUser.isEmailVerified() || foundUser.getPassword() == null) {
-            throw new LoginFailException("회원가입 미완료");
+            throw new LoginFailException("회원가입이 완료되지 않은 회원입니다. 다시 가입해주세요.");
         }
 
         // 패스워드 일치 검사
         if (!passwordEncoder.matches(dto.password(), foundUser.getPassword())) {
-            throw new LoginFailException("비밀번호가 틀렸습니다");
+            throw new LoginFailException("비밀번호가 틀렸습니다.");
         }
 
-        // 로그인 성공
+        // 로그인 성공 - 액세스 토큰을 발급
+        String accessToken = tokenProvider.createAccessToken(dto.email());
+
+        return Map.of(
+                "token", accessToken,
+                "message", "로그인에 성공했습니다.",
+                "email", dto.email(),
+                "role", foundUser.getRole().toString()
+        );
     }
 }

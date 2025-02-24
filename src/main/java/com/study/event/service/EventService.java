@@ -27,7 +27,10 @@ public class EventService {
     @Transactional(readOnly = true)
     public Map<String, Object> getEvents(String sort, int pageNo) {
 
-        Slice<Event> events = eventRepository.findEvents(sort, PageRequest.of(pageNo - 1, 4));
+        Slice<Event> events = eventRepository.findEvents(
+                sort,
+                PageRequest.of(pageNo - 1, 4)
+        );
 
         List<EventResponse> eventList = events.getContent()
                 .stream()
@@ -40,7 +43,6 @@ public class EventService {
                 , "eventList", eventList
         );
     }
-
 
     // 단일 조회
     @Transactional(readOnly = true)

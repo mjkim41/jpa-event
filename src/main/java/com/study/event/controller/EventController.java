@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/events")
@@ -19,16 +20,24 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class EventController {
 
-    //
     private final EventService eventService;
 
     // 전체조회 요청
-    @GetMapping("")
+    @GetMapping
     public ResponseEntity<?> getList(
-            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "1") int page
     ) {
+        if (sort == null) {
+            return ResponseEntity.badRequest().body(
+                    Map.of(
+                            "message", "정렬 기준은 필수입니다."
+                    )
+            );
+        }
+
         Map<String, Object> events = eventService.getEvents(sort, page);
+
         return ResponseEntity.ok().body(events);
     }
 
