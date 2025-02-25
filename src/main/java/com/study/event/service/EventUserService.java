@@ -4,10 +4,10 @@ import com.study.event.domain.eventUser.dto.request.LoginRequest;
 import com.study.event.domain.eventUser.dto.request.SignupRequest;
 import com.study.event.domain.eventUser.entity.EmailVerification;
 import com.study.event.domain.eventUser.entity.EventUser;
-import com.study.event.exception.LoginFailException;
 import com.study.event.jwt.JwtTokenProvider;
 import com.study.event.repository.EmailVerificationRepository;
 import com.study.event.repository.EventUserRepository;
+import com.study.exception.LoginFailureException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -225,17 +225,17 @@ public class EventUserService {
 
         // 이메일을 통한 회원 조회
         EventUser foundUser = eventUserRepository.findByEmail(dto.email()).orElseThrow(
-                () -> new LoginFailException("가입된 회원이 아닙니다.")
+                () -> new LoginFailureException("가입된 회원이 아닙니다.")
         );
 
         // 이메일 인증을 안했거나, 패스워드 입력단계를 수행하지 않은 회원
         if (!foundUser.isEmailVerified() || foundUser.getPassword() == null) {
-            throw new LoginFailException("회원가입이 완료되지 않은 회원입니다. 다시 가입해주세요.");
+            throw new LoginFailureException("회원가입이 완료되지 않은 회원입니다. 다시 가입해주세요.");
         }
 
         // 패스워드 일치 검사
         if (!passwordEncoder.matches(dto.password(), foundUser.getPassword())) {
-            throw new LoginFailException("비밀번호가 틀렸습니다.");
+            throw new LoginFailureException("비밀번호가 틀렸습니다.");
         }
 
         // 로그인 성공 - 액세스 토큰을 발급

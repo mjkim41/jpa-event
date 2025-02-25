@@ -2,8 +2,8 @@ package com.study.event.controller;
 
 import com.study.event.domain.eventUser.dto.request.LoginRequest;
 import com.study.event.domain.eventUser.dto.request.SignupRequest;
-import com.study.event.exception.LoginFailException;
 import com.study.event.service.EventUserService;
+import com.study.exception.LoginFailureException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -66,7 +66,7 @@ public class AuthController {
             Map<String, Object> loginMap = eventUserService.authenticate(dto);
 
             return ResponseEntity.ok().body(loginMap);
-        } catch (LoginFailException e) {
+        } catch (LoginFailureException e) {
             return ResponseEntity.status(422)
                     .body(Map.of(
                             "message", e.getMessage()
