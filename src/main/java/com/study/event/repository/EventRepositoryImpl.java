@@ -18,7 +18,7 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
     private final JPAQueryFactory factory;
 
     @Override
-    public Slice<Event> findEvents(String sort, Pageable pageable) {
+    public Slice<Event> findEvents(String sort, Pageable pageable, Long userId) {
 
         OrderSpecifier<?> orderSpecifier;
         switch (sort) {
@@ -32,20 +32,24 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
                 orderSpecifier = event.date.desc();
         }
 
+        // 무한스크롤링을 위해서는 사이즈보다 1개 더 많이 조회해봐야 함
         List<Event> eventList = factory
                 .selectFrom(event)
+                .where(event.eventUser.id.eq(userId))
                 .orderBy(orderSpecifier)
                 .limit(pageable.getPageSize() + 1)
                 .offset(pageable.getOffset())
                 .fetch()
                 ;
 
-        // 추가 데이터 있는지 확인
+        // 추가 데이터가 있는지 확인
         boolean hasNext = false;
+        //   기존데이터보다 1개 더 조회한결과  //  원래 조회하고 싶었던 결과수
         if (eventList.size() > pageable.getPageSize()) {
             hasNext = true;
             eventList.remove(eventList.size() - 1);
         }
+
 
         return new SliceImpl<>(eventList, pageable, hasNext);
 
