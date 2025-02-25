@@ -1,10 +1,13 @@
 package com.study.event.domain.eventUser.entity;
 
+import com.study.event.domain.event.entity.Event;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @ToString
@@ -12,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
 @Entity
 @Table(name = "tbl_event_user")
 public class EventUser {
@@ -24,29 +28,33 @@ public class EventUser {
     @Column(name = "ev_user_email", nullable = false, unique = true)
     private String email;
 
-    // Not Null 안 거는 이유 : SNS 로그인한 회원
-    @Column(length=500)
+    // NN을 안거는 이유 : SNS 로그인한 회원, 인증번호만 받고 회원가입을 마무리하지 않은 회원 때문
+    @Column(length = 500)
     private String password;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private Role role = Role.COMMON;
+    private Role role = Role.COMMON; // 권한
 
-//    @CreationTimestamp (회원가입을 위한 인증코드 보낼 때는 설정 안되게)
     private LocalDateTime createdAt;
 
-    // 이메일 인증 완료헀는지 여부
+    // 이메일 인증을 완료했는지 여부
     @Column(nullable = false)
     private boolean emailVerified;
 
-    // 이메일 인증 완료여부를 변경해주는 편의메소드
+    // 이벤트와 양방향 연관관계 매핑
+    @OneToMany(mappedBy = "eventUser", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Event> eventList = new ArrayList<>();
+
+    // 이메일 인증 완료를 처리하는 메서드
     public void emailVerify() {
         this.emailVerified = true;
     }
 
+    // 회원가입을 마무리하는 메서드
     public void confirm(String password) {
         this.password = password;
         this.createdAt = LocalDateTime.now();
     }
-
 }
