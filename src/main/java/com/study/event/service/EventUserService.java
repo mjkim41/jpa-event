@@ -5,6 +5,7 @@ import com.study.event.domain.eventUser.dto.request.SignupRequest;
 import com.study.event.domain.eventUser.entity.EmailVerification;
 import com.study.event.domain.eventUser.entity.EventUser;
 import com.study.event.jwt.JwtTokenProvider;
+import com.study.event.jwt.dto.TokenUserInfo;
 import com.study.event.repository.EmailVerificationRepository;
 import com.study.event.repository.EventUserRepository;
 import com.study.exception.LoginFailureException;
@@ -245,6 +246,27 @@ public class EventUserService {
                 "token", accessToken,
                 "message", "로그인에 성공했습니다.",
                 "email", dto.email(),
+                "role", foundUser.getRole().toString()
+        );
+    }
+
+    // 등급 업 처리
+    public Map<String, Object> promoteToPremium(TokenUserInfo userInfo) {
+
+        // 회원 탐색
+        EventUser foundUser = eventUserRepository.findByEmail(userInfo.email()).orElseThrow();
+
+        // 등급 변경 처리
+        foundUser.promotion();
+        eventUserRepository.save(foundUser);
+
+        // 토큰 재발행
+        String accessToken = tokenProvider.createAccessToken(foundUser);
+
+        return Map.of(
+                "token", accessToken,
+                "message", "등급이 프리미엄으로 업그레이드되었습니다.",
+                "email", foundUser.getEmail(),
                 "role", foundUser.getRole().toString()
         );
     }

@@ -44,6 +44,8 @@ public class SecurityConfig {
                 // 인가 설정
                 .authorizeHttpRequests(auth ->
                         auth
+                                // 등업은 일반회원만 가능
+                                .requestMatchers("/api/auth/promote").hasAuthority("COMMON")
                                 // '/api/auth'로 시작하는 요청은 인증을 필요로 하지 않음
                                 .requestMatchers("/api/auth/**").permitAll()
                                 // 인가(authorization 필요) : hasAuthority("")
