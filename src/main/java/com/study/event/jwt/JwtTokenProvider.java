@@ -58,8 +58,11 @@ public class JwtTokenProvider {
         // 만료시간
         Date validity = new Date(now.getTime() + validityTime);
 
+
         // 서명을 넣어야 함
         return Jwts.builder()
+                // 토큰에 포함시킬 일반적인 정보가 아닌 커스텀 정보(이메일, 권한)는 클레임에 따로 세팅
+                // 커스텀정보는 제일 먼저 세팅
                 .setClaims(Map.of(
                         "email", eventUser.getEmail(),
                         "role", eventUser.getRole().toString()
@@ -88,12 +91,12 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 검증된 토큰에서 이메일을 추출하는 메서드
-     *
+     * 검증된 토큰에서 이메일, 권한 등을 추출하는 메서드
      * @param token - 인증 토큰
-     * @return 토큰에서 추출한 이메일
+     * @return 토큰에서 추출한 이메일, 권한등을 담은 DTO
      */
     public TokenUserInfo getCurrentLoginUserInfo(String token) {
+        // 토큰에 들어있는 데이터들의 집합
         Claims claims = parseClaims(token);
 
         return TokenUserInfo.builder()

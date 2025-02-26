@@ -58,6 +58,7 @@ public class EventUser {
         this.createdAt = LocalDateTime.now();
     }
 
+    // 등급업 처리
     public void promotion() {
         this.role = Role.PREMIUM;
     }

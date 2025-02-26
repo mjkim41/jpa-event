@@ -2,9 +2,9 @@ package com.study.event.controller;
 
 import com.study.event.domain.eventUser.dto.request.LoginRequest;
 import com.study.event.domain.eventUser.dto.request.SignupRequest;
+import com.study.event.exception.LoginFailException;
 import com.study.event.jwt.dto.TokenUserInfo;
 import com.study.event.service.EventUserService;
-import com.study.exception.LoginFailureException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -68,7 +68,7 @@ public class AuthController {
             Map<String, Object> loginMap = eventUserService.authenticate(dto);
 
             return ResponseEntity.ok().body(loginMap);
-        } catch (LoginFailureException e) {
+        } catch (LoginFailException e) {
             return ResponseEntity.status(422)
                     .body(Map.of(
                             "message", e.getMessage()
@@ -76,7 +76,7 @@ public class AuthController {
         }
     }
 
-    // pREMIUM 회원으로 등급 업 요청
+    // Premium회원으로 등급업 하는 요청
     @PutMapping("/promote")
     public ResponseEntity<?> promote(
             @AuthenticationPrincipal TokenUserInfo userInfo

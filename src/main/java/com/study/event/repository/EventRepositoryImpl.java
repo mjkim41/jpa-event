@@ -1,6 +1,5 @@
 package com.study.event.repository;
 
-import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.event.domain.event.entity.Event;
@@ -59,11 +58,12 @@ public class EventRepositoryImpl implements EventRepositoryCustom {
 
     @Override
     public Optional<Long> countEventByUser(Long userId) {
-        return Optional.ofNullable(factory
-                .select(event.count())
-                .from(event)
-                .where(event.eventUser.id.eq(userId))
-                .fetchFirst());
-
+        return Optional.ofNullable(
+                factory
+                        .select(event.count())
+                        .from(event)
+                        .where(event.eventUser.id.eq(userId))
+                        .fetchFirst()
+        );
     }
 }

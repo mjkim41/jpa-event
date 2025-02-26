@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,18 +57,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 토큰이 존재하고, 유효성 검증에 통과하면 인증 처리
         if (StringUtils.hasText(token) && tokenProvider.validateToken(token)) {
-            // 토큰이 유효하므로, 토큰에서 로그인한 사용자의 이메일 추출
+            // 토큰이 유효하므로, 토큰에서 로그인한 사용자의 이메일, id, 권한 추출
             TokenUserInfo userInfo = tokenProvider.getCurrentLoginUserInfo(token);
 
-            // 회원 권한 조회
+            // 이 회원의 권한을 조회
             Role role = userInfo.role();
 
-            // 회원 권한을 담을 배열 생성
-            // - List<SimpleGrantedAuthority>에 담는 이유 : new UsernamePasswordAuthenticationToken에 인자로 넣어줄건데, 이 때 인자로 해당 데이터 타입을 넣어줘야 하므로
+            // 회원의 권한을 담을 배열 생성
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-            // toString하는 이유 : parameter로 string 받음
-            SimpleGrantedAuthority roleAuthority = new SimpleGrantedAuthority(role.toString());
-            authorities.add(roleAuthority);
+            authorities.add(new SimpleGrantedAuthority(role.toString()));
 
             // Spring Security에게 접근을 허용하라고 명령
             // Authentication 객체 생성 → SecurityContextHolder에 저장
