@@ -1,5 +1,6 @@
 package com.study.event.repository;
 
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.study.event.domain.event.entity.Event;

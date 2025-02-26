@@ -9,6 +9,8 @@ import com.study.event.service.EventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,8 +60,12 @@ public class EventController {
     }
 
     // 단일 조회 요청
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('PREMIUM')")
     @GetMapping("/{eventId}")
-    public ResponseEntity<?> getEvent(@PathVariable Long eventId) {
+    public ResponseEntity<?> getEvent(
+            @PathVariable Long eventId,
+            @AuthenticationPrincipal TokenUserInfo userInfo
+    ) {
 
         if (eventId == null || eventId < 1) {
             String errorMessage = "eventId가 유효하지 않습니다.";
